@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CRUD com Node.js + MySQL</title>
+  <style>
+    body { font-family: Arial; padding: 2rem; background: #f4f4f4; }
+    input, button { margin: 0.5rem 0; padding: 0.5rem; }
+    table { width: 100%; margin-top: 2rem; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>CRUD Usuários</h1>
+
+  <input id="nome" placeholder="Nome" />
+  <button onclick="criarUsuario()">Criar</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="listaUsuarios"></tbody>
+  </table>
+
+  <script>
+    const API = 'http://localhost:3000/usuarios';
+
+    function carregarUsuarios() {
+      fetch(API)
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('listaUsuarios');
+          tbody.innerHTML = '';
+          data.forEach(usuario => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${usuario.id}</td>
+                <td><input value="${usuario.nome}" onchange="editarUsuario(${usuario.id}, this.value)" /></td>
+                <td>
+                  <button onclick="deletarUsuario(${usuario.id})">Excluir</button>
+                </td>
+              </tr>
+            `;
+          });
+        });
+    }
+
+    function criarUsuario() {
+      const nome = document.getElementById('nome').value;
+      if (!nome) return alert('Informe um nome');
+
+      fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome })
+      })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById('nome').value = '';
+          carregarUsuarios();
+        });
+    }
+
+    function editarUsuario(id, novoNome) {
+      fetch(`http://localhost:3000/usuarios/${id}`, {  // Corrigido o endpoint aqui!
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: novoNome })
+      }).then(() => carregarUsuarios());
+    }
+
+    function deletarUsuario(id) {
+      if (confirm('Tem certeza que deseja excluir?')) {
+        fetch(`http://localhost:3000/usuarios/${id}`, { method: 'DELETE' })
+          .then(() => carregarUsuarios());
+      }
+    }
+
+    carregarUsuarios();
+  </script>
+</body>
+</html>
